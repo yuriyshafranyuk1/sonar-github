@@ -155,13 +155,13 @@ public class PullRequestFacade {
         if (patch == null) {
           continue;
         }
-        processPatch(patchLocationMapping, patch);
+        processPatch(patchLocationMapping, patch, !config.processOnlyModifiedLines());
       }
     }
     return result;
   }
 
-  static void processPatch(Map<Integer, Integer> patchLocationMapping, String patch) throws IOException {
+  static void processPatch(Map<Integer, Integer> patchLocationMapping, String patch, boolean processAllLines) throws IOException {
     int currentLine = -1;
     int patchLocation = 0;
     BufferedReader reader = new BufferedReader(new StringReader(patch));
@@ -176,9 +176,12 @@ public class PullRequestFacade {
         currentLine = Integer.parseInt(matcher.group(1));
       } else if (line.startsWith("-")) {
         // Skip removed lines
-      } else if (line.startsWith("+") || line.startsWith(" ")) {
-        // Count added and unmodified lines
+      } else if (line.startsWith("+") || (processAllLines && line.startsWith(" "))) {
+        // Count added and unmodified lines if processAllLines==true
         patchLocationMapping.put(currentLine, patchLocation);
+        currentLine++;
+      } else if (!processAllLines && line.startsWith(" ")) {
+        // Keep current line up to date if processAllLines==false
         currentLine++;
       } else if (line.startsWith("\\")) {
         // I'm only aware of \ No newline at end of file

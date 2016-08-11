@@ -116,5 +116,9 @@ public class GitHubPluginConfiguration {
   public boolean tryReportIssuesInline() {
     return !settings.getBoolean(GitHubPlugin.GITHUB_DISABLE_INLINE_COMMENTS);
   }
+  
+  public boolean processOnlyModifiedLines() {
+    return settings.getBoolean(GitHubPlugin.GITHUB_PROCESS_ONLY_MODIFIED_LINES);
+  }
 
 }
