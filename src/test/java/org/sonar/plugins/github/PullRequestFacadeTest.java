@@ -93,6 +93,18 @@ public class PullRequestFacadeTest {
     assertThat(patchLocationMapping).containsOnly(MapEntry.entry(24, 1), MapEntry.entry(25, 2), MapEntry.entry(26, 3), MapEntry.entry(27, 5), MapEntry.entry(28, 6),
       MapEntry.entry(29, 7), MapEntry.entry(30, 8), MapEntry.entry(31, 9), MapEntry.entry(32, 10));
   }
+  
+  @Test
+  public void testPatchLineMapping_only_added_lines() throws IOException {
+    Map<Integer, Integer> patchLocationMapping = new LinkedHashMap<Integer, Integer>();
+    PullRequestFacade
+      .processPatch(
+        patchLocationMapping,
+        "@@ -24,9 +24,9 @@\n /**\n  * A plugin is a group of extensions. See <code>org.sonar.api.Extension</code> interface to browse\n  * available extension points.\n- * <p/>\n  * <p>The manifest property <code>Plugin-Class</code> must declare the name of the implementation class.\n  * It is automatically set by sonar-packaging-maven-plugin when building plugins.</p>\n+ * <p>Implementation must declare a public constructor with no-parameters.</p>\n  *\n  * @see org.sonar.api.Extension\n  * @since 1.10",
+        false);
+
+    assertThat(patchLocationMapping).containsOnly(MapEntry.entry(29, 7));
+  }
 
   @Test
   public void testPatchLineMapping_no_newline_at_the_end() throws IOException {
