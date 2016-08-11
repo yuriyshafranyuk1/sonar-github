@@ -66,7 +66,7 @@ import org.sonar.api.SonarPlugin;
     key = GitHubPlugin.GITHUB_PROCESS_ONLY_MODIFIED_LINES,
     defaultValue = "false",
     name = "Process only modified lines of code",
-    description = "",
+    description = "If this property set to true, then only modified lines of code would be analyzed by sonar",
     project = true,
     global = true,
     type = PropertyType.BOOLEAN)
