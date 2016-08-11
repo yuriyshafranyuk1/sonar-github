@@ -61,10 +61,10 @@ import org.sonar.api.PropertyType;
     global = true,
     type = PropertyType.BOOLEAN),
   @Property(
-    key = GitHubPlugin.GITHUB_PROCESS_ONLY_MODIFIED_LINES,
+    key = GitHubPlugin.GITHUB_INLINE_COMMENTS_ONLY_ADDED_LINES,
     defaultValue = "false",
-    name = "Process only modified lines of code",
-    description = "If this property set to true, then only modified lines of code would be analyzed by sonar",
+    name = "Inline comments only about added lines",
+    description = "If this property set to true, then inline comments can be only about added or modified lines of code.",
     project = true,
     global = true,
     type = PropertyType.BOOLEAN)
@@ -76,7 +76,7 @@ public class GitHubPlugin implements Plugin {
   public static final String GITHUB_REPO = "sonar.github.repository";
   public static final String GITHUB_PULL_REQUEST = "sonar.github.pullRequest";
   public static final String GITHUB_DISABLE_INLINE_COMMENTS = "sonar.github.disableInlineComments";
-  public static final String GITHUB_PROCESS_ONLY_MODIFIED_LINES = "sonar.github.proccessOnlyModifiedLines";
+  public static final String GITHUB_INLINE_COMMENTS_ONLY_ADDED_LINES = "sonar.github.inlineCommentsOnlyAddedLines";
 
   @Override
   public void define(Context context) {

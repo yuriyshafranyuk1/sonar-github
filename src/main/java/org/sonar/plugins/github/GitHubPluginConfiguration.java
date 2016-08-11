@@ -118,7 +118,7 @@ public class GitHubPluginConfiguration {
   }
   
   public boolean processOnlyModifiedLines() {
-    return settings.getBoolean(GitHubPlugin.GITHUB_PROCESS_ONLY_MODIFIED_LINES);
+    return settings.getBoolean(GitHubPlugin.GITHUB_INLINE_COMMENTS_ONLY_ADDED_LINES);
   }
 
 }
