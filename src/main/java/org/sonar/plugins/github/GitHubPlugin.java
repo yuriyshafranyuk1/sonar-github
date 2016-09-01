@@ -63,10 +63,10 @@ import org.sonar.api.SonarPlugin;
     global = true,
     type = PropertyType.BOOLEAN),
   @Property(
-    key = GitHubPlugin.GITHUB_INLINE_COMMENTS_ONLY_ADDED_LINES,
+    key = GitHubPlugin.GITHUB_INLINE_COMMENTS_DIFF_ONLY,
     defaultValue = "false",
-    name = "Inline comments only about added lines",
-    description = "If this property set to true, then inline comments can be only about added or modified lines of code.",
+    name = "Inline comment will be limited strictly to lines that are part of the diff",
+    description = "If this property set to true, then inline comment will be limited strictly to lines that are part of the diff.",
     project = true,
     global = true,
     type = PropertyType.BOOLEAN)
@@ -78,7 +78,7 @@ public class GitHubPlugin extends SonarPlugin {
   public static final String GITHUB_REPO = "sonar.github.repository";
   public static final String GITHUB_PULL_REQUEST = "sonar.github.pullRequest";
   public static final String GITHUB_DISABLE_INLINE_COMMENTS = "sonar.github.disableInlineComments";
-  public static final String GITHUB_INLINE_COMMENTS_ONLY_ADDED_LINES = "sonar.github.inlineCommentsOnlyAddedLines";
+  public static final String GITHUB_INLINE_COMMENTS_DIFF_ONLY = "sonar.github.inlineCommentsDiffOnly";
 
   @Override
   public List getExtensions() {

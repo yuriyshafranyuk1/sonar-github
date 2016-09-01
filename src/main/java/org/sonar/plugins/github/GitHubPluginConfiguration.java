@@ -117,7 +117,7 @@ public class GitHubPluginConfiguration implements BatchComponent {
   }
   
   public boolean processOnlyModifiedLines() {
-    return settings.getBoolean(GitHubPlugin.GITHUB_INLINE_COMMENTS_ONLY_ADDED_LINES);
+    return settings.getBoolean(GitHubPlugin.GITHUB_INLINE_COMMENTS_DIFF_ONLY);
   }
 
 }
