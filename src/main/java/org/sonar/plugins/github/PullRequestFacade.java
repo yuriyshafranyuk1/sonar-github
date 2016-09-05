@@ -19,9 +19,9 @@
  */
 package org.sonar.plugins.github;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
@@ -40,25 +40,24 @@ import org.kohsuke.github.GHPullRequestReviewComment;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
-import org.sonar.api.batch.BatchSide;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonar.api.BatchComponent;
 import org.sonar.api.batch.InstantiationStrategy;
-import org.sonar.api.batch.fs.InputComponent;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.InputPath;
 import org.sonar.api.scan.filesystem.PathResolver;
 import org.sonar.api.utils.MessageException;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
 
 /**
  * Facade for all WS interaction with GitHub.
  */
-@BatchSide
 @InstantiationStrategy(InstantiationStrategy.PER_BATCH)
-public class PullRequestFacade {
+public class PullRequestFacade implements BatchComponent {
 
-  private static final Logger LOG = Loggers.get(PullRequestFacade.class);
+  private static final Logger LOG = LoggerFactory.getLogger(PullRequestFacade.class);
 
+  @VisibleForTesting
   static final String COMMIT_CONTEXT = "sonarqube";
 
   private final GitHubPluginConfiguration config;
@@ -90,6 +89,7 @@ public class PullRequestFacade {
     }
   }
 
+  @VisibleForTesting
   void initGitBaseDir(File projectBaseDir) {
     File detectedGitBaseDir = findGitBaseDir(projectBaseDir);
     if (detectedGitBaseDir == null) {
@@ -100,10 +100,12 @@ public class PullRequestFacade {
     }
   }
 
+  @VisibleForTesting
   void setGhRepo(GHRepository ghRepo) {
     this.ghRepo = ghRepo;
   }
 
+  @VisibleForTesting
   void setPr(GHPullRequest pr) {
     this.pr = pr;
   }
@@ -118,6 +120,7 @@ public class PullRequestFacade {
     return findGitBaseDir(baseDir.getParentFile());
   }
 
+  @VisibleForTesting
   void setGitBaseDir(File gitBaseDir) {
     this.gitBaseDir = gitBaseDir;
   }
@@ -155,13 +158,14 @@ public class PullRequestFacade {
         if (patch == null) {
           continue;
         }
-        processPatch(patchLocationMapping, patch, !config.processOnlyModifiedLines());
+        processPatch(patchLocationMapping, patch);
       }
     }
     return result;
   }
 
-  static void processPatch(Map<Integer, Integer> patchLocationMapping, String patch, boolean processAllLines) throws IOException {
+  @VisibleForTesting
+  static void processPatch(Map<Integer, Integer> patchLocationMapping, String patch) throws IOException {
     int currentLine = -1;
     int patchLocation = 0;
     BufferedReader reader = new BufferedReader(new StringReader(patch));
@@ -176,12 +180,9 @@ public class PullRequestFacade {
         currentLine = Integer.parseInt(matcher.group(1));
       } else if (line.startsWith("-")) {
         // Skip removed lines
-      } else if (line.startsWith("+") || (processAllLines && line.startsWith(" "))) {
-        // Count added and unmodified lines if processAllLines==true
+      } else if (line.startsWith("+") || line.startsWith(" ")) {
+        // Count added and unmodified lines
         patchLocationMapping.put(currentLine, patchLocation);
-        currentLine++;
-      } else if (!processAllLines && line.startsWith(" ")) {
-        // Keep current line up to date if processAllLines==false
         currentLine++;
       } else if (line.startsWith("\\")) {
         // I'm only aware of \ No newline at end of file
@@ -191,6 +192,7 @@ public class PullRequestFacade {
     }
   }
 
+  @VisibleForTesting
   String getPath(InputPath inputPath) {
     return new PathResolver().relativePath(gitBaseDir, inputPath.file());
   }
@@ -274,27 +276,21 @@ public class PullRequestFacade {
         targetUrl = lastStatus.getTargetUrl();
       }
       ghRepo.createCommitStatus(pr.getHead().getSha(), status, targetUrl, statusDescription, COMMIT_CONTEXT);
-    } catch (FileNotFoundException e) {
-      String msg = "Unable to set pull request status. GitHub account probably miss push permission on the repository.";
-      if (LOG.isDebugEnabled()) {
-        LOG.warn(msg, e);
-      } else {
-        LOG.warn(msg);
-      }
     } catch (IOException e) {
       throw new IllegalStateException("Unable to update commit status", e);
     }
   }
 
   @CheckForNull
-  public String getGithubUrl(@Nullable InputComponent inputComponent, @Nullable Integer issueLine) {
-    if (inputComponent instanceof InputPath) {
-      String path = getPath((InputPath) inputComponent);
+  public String getGithubUrl(@Nullable InputPath inputPath, @Nullable Integer issueLine) {
+    if (inputPath != null) {
+      String path = getPath(inputPath);
       return ghRepo.getHtmlUrl().toString() + "/blob/" + pr.getHead().getSha() + "/" + path + (issueLine != null ? ("#L" + issueLine) : "");
     }
     return null;
   }
 
+  @VisibleForTesting
   @CheckForNull
   GHCommitStatus getCommitStatusForContext(GHPullRequest pr, String context) {
     List<GHCommitStatus> statuses;

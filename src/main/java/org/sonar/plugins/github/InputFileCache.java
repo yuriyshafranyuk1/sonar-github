@@ -19,15 +19,33 @@
  */
 package org.sonar.plugins.github;
 
-import org.junit.Test;
+import java.util.HashMap;
+import java.util.Map;
+import javax.annotation.CheckForNull;
+import org.sonar.api.BatchComponent;
+import org.sonar.api.batch.InstantiationStrategy;
+import org.sonar.api.batch.fs.InputFile;
 
-import static org.assertj.core.api.Assertions.assertThat;
+/**
+ * This is a temporary solution before being able to use new postjob API in SQ 5.2.
+ */
+@InstantiationStrategy(InstantiationStrategy.PER_BATCH)
+public class InputFileCache implements BatchComponent {
 
-public class GitHubPluginTest {
+  private final Map<String, InputFile> inputFileByKey = new HashMap<>();
 
-  @Test
-  public void uselessTest() {
-    assertThat(new GitHubPlugin().getExtensions().size()).isGreaterThan(1);
+  void put(String componentKey, InputFile inputFile) {
+    inputFileByKey.put(componentKey, inputFile);
+  }
+
+  @CheckForNull
+  public InputFile byKey(String componentKey) {
+    return inputFileByKey.get(componentKey);
+  }
+
+  @Override
+  public String toString() {
+    return "GitHub Plugin InputFile Cache";
   }
 
 }

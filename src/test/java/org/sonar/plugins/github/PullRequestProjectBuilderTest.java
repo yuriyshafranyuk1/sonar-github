@@ -24,7 +24,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.sonar.api.batch.AnalysisMode;
+import org.sonar.api.CoreProperties;
 import org.sonar.api.batch.bootstrap.ProjectBuilder;
 import org.sonar.api.config.PropertyDefinitions;
 import org.sonar.api.config.Settings;
@@ -36,7 +36,6 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
 public class PullRequestProjectBuilderTest {
@@ -47,14 +46,12 @@ public class PullRequestProjectBuilderTest {
   private PullRequestProjectBuilder pullRequestProjectBuilder;
   private PullRequestFacade facade;
   private Settings settings;
-  private AnalysisMode mode;
 
   @Before
   public void prepare() {
     settings = new Settings(new PropertyDefinitions(GitHubPlugin.class));
     facade = mock(PullRequestFacade.class);
-    mode = mock(AnalysisMode.class);
-    pullRequestProjectBuilder = new PullRequestProjectBuilder(new GitHubPluginConfiguration(settings), facade, mode);
+    pullRequestProjectBuilder = new PullRequestProjectBuilder(new GitHubPluginConfiguration(settings), facade, settings);
 
   }
 
@@ -75,9 +72,39 @@ public class PullRequestProjectBuilderTest {
   }
 
   @Test
+  public void shouldNotFailIfDryRun() {
+    settings.setProperty(GitHubPlugin.GITHUB_PULL_REQUEST, "1");
+    settings.setProperty(CoreProperties.DRY_RUN, "true");
+
+    pullRequestProjectBuilder.build(mock(ProjectBuilder.Context.class, withSettings().defaultAnswer(RETURNS_DEEP_STUBS)));
+
+    verify(facade).init(eq(1), any(File.class));
+  }
+
+  @Test
+  public void shouldNotFailIfPreview() {
+    settings.setProperty(GitHubPlugin.GITHUB_PULL_REQUEST, "1");
+    settings.setProperty(CoreProperties.ANALYSIS_MODE, CoreProperties.ANALYSIS_MODE_PREVIEW);
+
+    pullRequestProjectBuilder.build(mock(ProjectBuilder.Context.class, withSettings().defaultAnswer(RETURNS_DEEP_STUBS)));
+
+    verify(facade).init(eq(1), any(File.class));
+  }
+
+  @Test
+  public void shouldNotFailIfIncremental() {
+    settings.setProperty(GitHubPlugin.GITHUB_PULL_REQUEST, "1");
+    settings.setProperty(CoreProperties.ANALYSIS_MODE, CoreProperties.ANALYSIS_MODE_INCREMENTAL);
+
+    pullRequestProjectBuilder.build(mock(ProjectBuilder.Context.class, withSettings().defaultAnswer(RETURNS_DEEP_STUBS)));
+
+    verify(facade).init(eq(1), any(File.class));
+  }
+
+  @Test
   public void shouldNotFailIfIssues() {
     settings.setProperty(GitHubPlugin.GITHUB_PULL_REQUEST, "1");
-    when(mode.isIssues()).thenReturn(true);
+    settings.setProperty(CoreProperties.ANALYSIS_MODE, "issues");
 
     pullRequestProjectBuilder.build(mock(ProjectBuilder.Context.class, withSettings().defaultAnswer(RETURNS_DEEP_STUBS)));
 

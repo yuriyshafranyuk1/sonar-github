@@ -21,19 +21,16 @@ package org.sonar.plugins.github;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Locale;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.StringUtils;
+import org.sonar.api.BatchComponent;
 import org.sonar.api.CoreProperties;
-import org.sonar.api.batch.BatchSide;
 import org.sonar.api.batch.InstantiationStrategy;
-import org.sonar.api.batch.rule.Severity;
 import org.sonar.api.config.Settings;
 
-@BatchSide
 @InstantiationStrategy(InstantiationStrategy.PER_BATCH)
-public class MarkDownUtils {
+public class MarkDownUtils implements BatchComponent {
 
   private static final String IMAGES_ROOT_URL = "https://raw.githubusercontent.com/SonarCommunity/sonar-github/master/images/";
   private final String ruleUrlPrefix;
@@ -47,7 +44,7 @@ public class MarkDownUtils {
     this.ruleUrlPrefix = baseUrl;
   }
 
-  public String inlineIssue(Severity severity, String message, String ruleKey) {
+  public String inlineIssue(String severity, String message, String ruleKey) {
     String ruleLink = getRuleLink(ruleKey);
     StringBuilder sb = new StringBuilder();
     sb.append(getImageMarkdownForSeverity(severity))
@@ -58,7 +55,7 @@ public class MarkDownUtils {
     return sb.toString();
   }
 
-  private static String getLocation(String url) {
+  private String getLocation(String url) {
     String filename = Pattern.compile(".*/", Pattern.DOTALL).matcher(url).replaceAll(StringUtils.EMPTY);
     if (filename.length() <= 0) {
       filename = "Project";
@@ -67,7 +64,7 @@ public class MarkDownUtils {
     return filename;
   }
 
-  public String globalIssue(Severity severity, String message, String ruleKey, @Nullable String url, String componentKey) {
+  public String globalIssue(String severity, String message, String ruleKey, @Nullable String url, String componentKey) {
     String ruleLink = getRuleLink(ruleKey);
     StringBuilder sb = new StringBuilder();
     sb.append(getImageMarkdownForSeverity(severity)).append(" ");
@@ -93,8 +90,8 @@ public class MarkDownUtils {
     }
   }
 
-  public static String getImageMarkdownForSeverity(Severity severity) {
-    return "![" + severity.name() + "](" + IMAGES_ROOT_URL + "severity-" + severity.name().toLowerCase(Locale.ENGLISH) + ".png)";
+  public static String getImageMarkdownForSeverity(String severity) {
+    return "![" + severity + "](" + IMAGES_ROOT_URL + "severity-" + severity.toLowerCase() + ".png)";
   }
 
 }

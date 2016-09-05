@@ -19,16 +19,16 @@
  */
 package org.sonar.plugins.github;
 
-import java.util.Locale;
+import com.google.common.annotations.VisibleForTesting;
 import javax.annotation.Nullable;
 import org.kohsuke.github.GHCommitState;
-import org.sonar.api.batch.postjob.issue.PostJobIssue;
-import org.sonar.api.batch.rule.Severity;
+import org.sonar.api.issue.Issue;
+import org.sonar.api.rule.Severity;
 
 public class GlobalReport {
   private final MarkDownUtils markDownUtils;
   private final boolean tryReportIssuesInline;
-  private int[] newIssuesBySeverity = new int[Severity.values().length];
+  private int[] newIssuesBySeverity = new int[Severity.ALL.size()];
   private StringBuilder notReportedOnDiff = new StringBuilder();
   private int extraIssueCount = 0;
   private int maxGlobalReportedIssues;
@@ -37,14 +37,15 @@ public class GlobalReport {
     this(markDownUtils, tryReportIssuesInline, GitHubPluginConfiguration.MAX_GLOBAL_ISSUES);
   }
 
+  @VisibleForTesting
   public GlobalReport(MarkDownUtils markDownUtils, boolean tryReportIssuesInline, int maxGlobalReportedIssues) {
     this.markDownUtils = markDownUtils;
     this.tryReportIssuesInline = tryReportIssuesInline;
     this.maxGlobalReportedIssues = maxGlobalReportedIssues;
   }
 
-  private void increment(org.sonar.api.batch.rule.Severity severity) {
-    this.newIssuesBySeverity[severity.ordinal()]++;
+  private void increment(String severity) {
+    this.newIssuesBySeverity[Severity.ALL.indexOf(severity)]++;
   }
 
   public String formatForMarkdown() {
@@ -77,8 +78,7 @@ public class GlobalReport {
           sb.append(extraCount).append(" extra issue").append(extraCount > 1 ? "s" : "").append("\n");
         }
         sb.append(
-          "\nNote: The following issues were found on lines that were not modified in the pull request. "
-            + "Because these issues can't be reported as line comments, they are summarized here:\n");
+          "\nNote: The following issues were found on lines that were not modified in the pull request. Because these issues can't be reported as line comments, they are summarized here:\n");
       } else if (extraIssuesTruncated) {
         sb.append("\n#### Top ").append(maxGlobalReportedIssues).append(" issues\n");
       }
@@ -99,8 +99,8 @@ public class GlobalReport {
     return (newIssues(Severity.BLOCKER) > 0 || newIssues(Severity.CRITICAL) > 0) ? GHCommitState.ERROR : GHCommitState.SUCCESS;
   }
 
-  private int newIssues(Severity s) {
-    return newIssuesBySeverity[s.ordinal()];
+  private int newIssues(String s) {
+    return newIssuesBySeverity[Severity.ALL.indexOf(s)];
   }
 
   private void printSummaryBySeverityMarkdown(StringBuilder sb) {
@@ -121,14 +121,14 @@ public class GlobalReport {
         printNewIssuesInline(sb, Severity.CRITICAL);
         printNewIssuesInline(sb, Severity.BLOCKER);
       } else {
-        sb.append(" no criticals or blockers");
+        sb.append(" no critical nor blocker");
       }
     } else {
       sb.append("no issues");
     }
   }
 
-  private void printNewIssuesInline(StringBuilder sb, Severity severity) {
+  private void printNewIssuesInline(StringBuilder sb, String severity) {
     int issueCount = newIssues(severity);
     if (issueCount > 0) {
       if (sb.charAt(sb.length() - 1) == ',') {
@@ -136,19 +136,18 @@ public class GlobalReport {
       } else {
         sb.append(" and ");
       }
-      sb.append(issueCount).append(" ").append(severity.name().toLowerCase(Locale.ENGLISH));
+      sb.append(issueCount).append(" ").append(severity.toLowerCase());
     }
   }
 
-  private void printNewIssuesForMarkdown(StringBuilder sb, Severity severity) {
+  private void printNewIssuesForMarkdown(StringBuilder sb, String severity) {
     int issueCount = newIssues(severity);
     if (issueCount > 0) {
-      sb.append("* ").append(MarkDownUtils.getImageMarkdownForSeverity(severity)).append(" ").append(issueCount).append(" ").append(severity.name().toLowerCase(Locale.ENGLISH))
-        .append("\n");
+      sb.append("* ").append(MarkDownUtils.getImageMarkdownForSeverity(severity)).append(" ").append(issueCount).append(" ").append(severity.toLowerCase()).append("\n");
     }
   }
 
-  public void process(PostJobIssue issue, @Nullable String githubUrl, boolean reportedOnDiff) {
+  public void process(Issue issue, @Nullable String githubUrl, boolean reportedOnDiff) {
     increment(issue.severity());
     if (!reportedOnDiff) {
       if (extraIssueCount < maxGlobalReportedIssues) {

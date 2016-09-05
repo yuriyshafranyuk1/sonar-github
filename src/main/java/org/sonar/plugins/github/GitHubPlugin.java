@@ -19,11 +19,13 @@
  */
 package org.sonar.plugins.github;
 
+import java.util.Arrays;
+import java.util.List;
 import org.sonar.api.CoreProperties;
-import org.sonar.api.Plugin;
 import org.sonar.api.Properties;
 import org.sonar.api.Property;
 import org.sonar.api.PropertyType;
+import org.sonar.api.SonarPlugin;
 
 @Properties({
   @Property(
@@ -59,32 +61,25 @@ import org.sonar.api.PropertyType;
     description = "Issues will not be reported as inline comments but only in the global summary comment",
     project = true,
     global = true,
-    type = PropertyType.BOOLEAN),
-  @Property(
-    key = GitHubPlugin.GITHUB_INLINE_COMMENTS_DIFF_ONLY,
-    defaultValue = "false",
-    name = "Inline comment will be limited strictly to lines that are part of the diff",
-    description = "If this property set to true, then inline comment will be limited strictly to lines that are part of the diff.",
-    project = true,
-    global = true,
     type = PropertyType.BOOLEAN)
 })
-public class GitHubPlugin implements Plugin {
+public class GitHubPlugin extends SonarPlugin {
 
   public static final String GITHUB_ENDPOINT = "sonar.github.endpoint";
   public static final String GITHUB_OAUTH = "sonar.github.oauth";
   public static final String GITHUB_REPO = "sonar.github.repository";
   public static final String GITHUB_PULL_REQUEST = "sonar.github.pullRequest";
   public static final String GITHUB_DISABLE_INLINE_COMMENTS = "sonar.github.disableInlineComments";
-  public static final String GITHUB_INLINE_COMMENTS_DIFF_ONLY = "sonar.github.inlineCommentsDiffOnly";
 
   @Override
-  public void define(Context context) {
-    context.addExtensions(
+  public List getExtensions() {
+    return Arrays.asList(
       PullRequestIssuePostJob.class,
       GitHubPluginConfiguration.class,
       PullRequestProjectBuilder.class,
       PullRequestFacade.class,
+      InputFileCacheSensor.class,
+      InputFileCache.class,
       MarkDownUtils.class);
   }
 
